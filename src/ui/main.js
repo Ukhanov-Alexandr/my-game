@@ -1,4 +1,7 @@
-import { loadModules } from './modules.js';
+import { traceBeam, rotateMirror, isSolved } from '../core/index.js';
+import { levels } from '../levels/index.js';
+import { getDailyLevel, todayUTC } from '../daily/index.js';
+import { playRotate, playWin, setMuted } from '../audio/index.js';
 import { moveCursor, swipeDirection, keyAction, cellFromPoint, fitCellSize } from './grid.js';
 import { draw } from './render.js';
 
@@ -6,13 +9,8 @@ const $ = (id) => document.getElementById(id);
 const canvas = $('board');
 const ctx = canvas.getContext('2d');
 
-let mods, level, cursor, cs, moves, muted = false;
+let baseLevel, level, cursor, cs, moves, muted = false;
 let solved = false;
-
-function todayString() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 
 function show(screen) {
   $('menu').hidden = screen !== 'menu';
@@ -33,47 +31,48 @@ function layout() {
 }
 
 function render() {
-  const beam = mods.core.traceBeam(level);
-  solved = mods.core.isSolved(level);
+  const beam = traceBeam(level);
+  solved = isSolved(level);
   draw(ctx, level, beam, cursor, cs, solved);
   $('status').textContent = solved ? `Готово! Ходов: ${moves}` : `Ходов: ${moves} · кристаллы: ${beam.litCrystals.length}`;
   $('win').hidden = !solved;
 }
 
 function startLevel(lvl, title) {
-  level = lvl; cursor = { x: 0, y: 0 }; moves = 0; solved = false;
+  baseLevel = lvl; level = lvl; cursor = { x: 0, y: 0 }; moves = 0; solved = false;
   $('title').textContent = title;
+  $('hint-level').textContent = lvl.hint ?? '';
   show('game');
   layout();
 }
 
 function rotateAt(x, y) {
   if (solved) return;
-  const next = mods.core.rotateMirror(level, x, y);
+  const next = rotateMirror(level, x, y);
   if (next === level) return;
   level = next; moves++;
-  mods.audio.playRotate();
+  playRotate();
   const wasSolved = solved;
   render();
-  if (solved && !wasSolved) mods.audio.playWin();
+  if (solved && !wasSolved) playWin();
 }
 
 function buildMenu() {
   const list = $('levels');
   list.innerHTML = '';
-  mods.levels.forEach((lvl, i) => {
+  levels.forEach((lvl, i) => {
     const b = document.createElement('button');
     b.textContent = i + 1;
     b.setAttribute('aria-label', `Уровень ${i + 1}`);
-    b.onclick = () => startLevel(lvl, `Уровень ${i + 1}`);
+    b.onclick = () => startLevel(lvl, lvl.name ? `${i + 1}. ${lvl.name}` : `Уровень ${i + 1}`);
     list.appendChild(b);
   });
-  $('daily').onclick = () => startLevel(mods.getDailyLevel(todayString()), `Уровень дня · ${todayString()}`);
+  $('daily').onclick = () => { const day = todayUTC(); startLevel(getDailyLevel(day), `Уровень дня · ${day}`); };
 }
 
 function toggleMute() {
   muted = !muted;
-  mods.audio.setMuted(muted);
+  setMuted(muted);
   $('mute').textContent = muted ? '🔇' : '🔊';
 }
 
@@ -106,9 +105,8 @@ canvas.addEventListener('pointercancel', () => { touch = null; });
 
 $('back').onclick = () => show('menu');
 $('mute').onclick = toggleMute;
-$('restart').onclick = () => startLevel(level, $('title').textContent);
+$('restart').onclick = () => startLevel(baseLevel, $('title').textContent);
 window.addEventListener('resize', layout);
 
-mods = await loadModules();
 buildMenu();
 show('menu');
