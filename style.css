@@ -1,0 +1,14 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #0c0e16; color: #e8ecff; font-family: system-ui, sans-serif; }
+main, section { max-width: 640px; margin: 0 auto; padding: 16px; text-align: center; }
+section { display: flex; flex-direction: column; height: 100dvh; }
+section[hidden], main[hidden], [hidden] { display: none !important; }
+button { font: inherit; color: inherit; background: #232a3d; border: 1px solid #3a4260; border-radius: 10px; padding: 10px 14px; min-width: 44px; min-height: 44px; cursor: pointer; }
+button:hover { background: #2d3652; }
+.primary { background: #ff9f43; color: #1a1205; border: none; font-weight: 700; padding: 14px 28px; }
+.levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 8px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#board-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+canvas { touch-action: none; border-radius: 8px; max-width: 100%; }
+.hint { font-size: 13px; color: #8a93b5; }
+#win { padding: 8px; color: #7dffb0; }
