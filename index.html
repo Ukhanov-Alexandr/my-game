@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Зеркала и луч</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="menu">
+    <h1>Зеркала и луч</h1>
+    <p>Поворачивай зеркала, чтобы луч осветил все кристаллы.</p>
+    <button id="daily" class="primary">Уровень дня</button>
+    <h2>Уровни</h2>
+    <div id="levels" class="levels"></div>
+  </main>
+  <section id="game" hidden>
+    <header>
+      <button id="back" aria-label="В меню">←</button>
+      <strong id="title"></strong>
+      <button id="mute" aria-label="Звук">🔊</button>
+    </header>
+    <div id="board-wrap"><canvas id="board"></canvas></div>
+    <p id="status"></p>
+    <p class="hint">Стрелки / WASD — курсор, пробел или Enter — повернуть зеркало. На телефоне: тап — повернуть, свайп — двигать курсор.</p>
+    <div id="win" hidden><span>Уровень пройден! 🎉</span> <button id="restart">Заново</button></div>
+  </section>
+  <script type="module" src="src/ui/main.js"></script>
+</body>
+</html>
