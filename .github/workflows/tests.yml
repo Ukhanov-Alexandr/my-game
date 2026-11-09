@@ -1,0 +1,34 @@
+# Запускает тесты на каждом pull request и на каждом push.
+# Тесты — встроенный `node --test`, без npm и без установки зависимостей.
+
+name: Тесты
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Получить код
+        uses: actions/checkout@v4
+
+      - name: Установить Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Запустить тесты (node --test)
+        run: |
+          # Ищем все тестовые файлы внутри папки tests/.
+          # Если тестов ещё нет, шаг не падает, а честно сообщает об этом.
+          files=$(find tests -name '*.test.js' 2>/dev/null || true)
+          if [ -z "$files" ]; then
+            echo "Тестовых файлов в tests/ пока нет — пропускаем."
+            exit 0
+          fi
+          node --test $files
