@@ -7,9 +7,13 @@ import {
   isValidDate,
   todayUTC,
 } from '../../src/daily/index.js';
-import { traceBeam, isSolved, countCrystals } from '../../src/daily/beam.js';
-
-const CELL_TYPES = new Set(['empty', 'wall', 'emitter', 'mirror', 'crystal']);
+import {
+  traceBeam,
+  isSolved,
+  countCrystals,
+  validateLevel,
+  solve,
+} from '../../src/core/index.js';
 
 /** Все даты года в формате YYYY-MM-DD. */
 function datesOfYear(year) {
@@ -24,24 +28,6 @@ function withSolution(level, solution) {
   const copy = structuredClone(level);
   for (const { x, y, mirror } of solution) copy.cells[y][x].mirror = mirror;
   return copy;
-}
-
-/** Независимая проверка: перебираем все положения всех незакреплённых зеркал. */
-function bruteForceSolvable(level) {
-  const mirrors = [];
-  level.cells.forEach((row, y) =>
-    row.forEach((cell, x) => {
-      if (cell.type === 'mirror' && !cell.locked) mirrors.push({ x, y });
-    }),
-  );
-  const copy = structuredClone(level);
-  for (let mask = 0; mask < 2 ** mirrors.length; mask++) {
-    mirrors.forEach(({ x, y }, i) => {
-      copy.cells[y][x].mirror = mask & (1 << i) ? '\\' : '/';
-    });
-    if (isSolved(copy)) return true;
-  }
-  return false;
 }
 
 test('одна дата — один и тот же уровень', () => {
@@ -88,21 +74,10 @@ test('каждый день 2026–2027 годов: уровень по конт
   for (const date of [...datesOfYear(2026), ...datesOfYear(2027)]) {
     const { level, solution } = getDailyPuzzle(date);
 
-    // Форма уровня по общему контракту.
-    assert.equal(level.cells.length, level.height, date);
-    let emitters = 0;
-    for (const row of level.cells) {
-      assert.equal(row.length, level.width, date);
-      for (const cell of row) {
-        assert.ok(CELL_TYPES.has(cell.type), date);
-        if (cell.type === 'emitter') {
-          emitters++;
-          assert.ok(['up', 'right', 'down', 'left'].includes(cell.dir), date);
-        }
-        if (cell.type === 'mirror') assert.ok(cell.mirror === '/' || cell.mirror === '\\', date);
-      }
-    }
-    assert.equal(emitters, 1, date);
+    // Форма уровня по общему контракту и ровно один фонарь.
+    assert.deepEqual(validateLevel(level), [], date);
+    const emitters = level.cells.flat().filter((cell) => cell.type === 'emitter');
+    assert.equal(emitters.length, 1, date);
     assert.ok(countCrystals(level) >= 3, date);
 
     // В начале не все кристаллы горят, а с правильными зеркалами — все.
@@ -111,9 +86,11 @@ test('каждый день 2026–2027 годов: уровень по конт
   }
 });
 
-test('решаемость подтверждается полным перебором зеркал', () => {
-  for (const date of ['2026-11-09', '2026-11-10', '2026-12-31', '2027-06-15']) {
-    assert.ok(bruteForceSolvable(getDailyLevel(date)), date);
+test('решатель из ядра тоже находит решение', () => {
+  for (const date of datesOfYear(2027)) {
+    const result = solve(getDailyLevel(date));
+    assert.ok(result, date);
+    assert.ok(result.rotations.length > 0, date);
   }
 });
 

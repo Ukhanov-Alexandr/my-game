@@ -3,9 +3,8 @@
 // потом добавляем лишние стены и зеркала-обманки, а в конце поворачиваем часть
 // нужных зеркал неправильно. Так уровень всегда решаем: правильный ответ мы знаем.
 
-import { STEP, REFLECT, isSolved } from './beam.js';
+import { DIRECTIONS, STEP, REFLECT, isSolved } from '../core/index.js';
 
-const DIRS = ['up', 'right', 'down', 'left'];
 const TURNS = {
   up: ['left', 'right'],
   down: ['left', 'right'],
@@ -170,7 +169,7 @@ function buildPath(rng, width, height, mirrorCount) {
 
 /** Фонарь стоит на краю поля (не в углу) и светит внутрь. */
 function placeEmitter(rng, width, height) {
-  const side = rng.pick(DIRS);
+  const side = rng.pick(DIRECTIONS);
   if (side === 'up') return { x: rng.int(1, width - 2), y: 0, dir: 'down' };
   if (side === 'down') return { x: rng.int(1, width - 2), y: height - 1, dir: 'up' };
   if (side === 'left') return { x: 0, y: rng.int(1, height - 2), dir: 'right' };
