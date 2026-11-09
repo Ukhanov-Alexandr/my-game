@@ -1,0 +1,79 @@
+# Автоматическая публикация игры на GitHub Pages при push в main.
+# Сначала прогоняются тесты; публикация идёт только если они прошли.
+#
+# Важно: в настройках репозитория должно быть
+# Settings → Pages → Source: «GitHub Actions».
+
+name: Деплой на GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Не даём двум публикациям идти одновременно.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Получить код
+        uses: actions/checkout@v4
+
+      - name: Установить Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Запустить тесты (node --test)
+        run: |
+          files=$(find tests -name '*.test.js' 2>/dev/null || true)
+          if [ -z "$files" ]; then
+            echo "Тестовых файлов в tests/ пока нет — пропускаем."
+            exit 0
+          fi
+          node --test $files
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Получить код
+        uses: actions/checkout@v4
+
+      - name: Собрать папку для публикации
+        # Берём только файлы игры: служебные папки и документация не публикуются.
+        run: |
+          mkdir -p _site
+          rsync -a \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'tests' \
+            --exclude 'docs' \
+            --exclude '_site' \
+            ./ _site/
+
+      - name: Настроить GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Загрузить файлы
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Опубликовать
+        id: deployment
+        uses: actions/deploy-pages@v4
