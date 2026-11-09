@@ -24,7 +24,7 @@ export const core = {
           if (seen.has(key)) break;
           seen.add(key);
           path.push({ x: cx, y: cy });
-          if (cell.type === 'crystal') { lit.add(`${cx},${cy}`); break; }
+          if (cell.type === 'crystal') lit.add(`${cx},${cy}`); // луч проходит сквозь кристалл
           if (cell.type === 'mirror') dir = (cell.mirror === '/' ? SLASH : BACK)[dir];
         }
       }
@@ -53,10 +53,10 @@ const M = (m) => ({ type: 'mirror', mirror: m });
 export const levels = [{
   width: 5, height: 4,
   cells: [
-    L, E, E, M('/'), E,
-    E, W, E, E, E,
-    E, E, E, M('/'), E,
-    C, E, E, E, E,
+    [L, E, E, M('/'), E],
+    [E, W, E, E, E],
+    [E, E, E, M('/'), E],
+    [C, E, E, E, E],
   ],
 }];
 export const getDailyLevel = () => levels[0];
